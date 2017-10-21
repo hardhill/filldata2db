@@ -17,6 +17,7 @@ namespace filldata2db
             _fields = new List<string>();
             _types = new List<string>();
         }
+        public string FileCSV { get; set; }
         public string Delimeter { get; set; }
         public string Create { get; set; }
         public string Table { get; set; }
