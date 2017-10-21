@@ -15,20 +15,23 @@ namespace filldata2db
             //проверка параметра
             if (args.Length == 0)
             {
-                Console.Out.WriteLine("Не задан параметр <имя_файла_настроек>");
+                Console.Out.WriteLine("Не задан параметр <имя_файла_параметров>");
                 Environment.Exit(0);
             }
             creatorsql _cr = new creatorsql(args[0]);
             if (!File.Exists(args[0]))
             {
                 _cr.GenerateParam();
+                Console.Out.WriteLine("Создан файл параметров. Запустите программу еще раз");
+                Console.Read();
+                Environment.Exit(0);
             }
             
             Console.Out.WriteLine("Создание файла SQL для построения БД и наполнения данными таблиц...");
             _cr.GenerateSQLFile("exportsqldata.sql");
 
-
-            Console.In.Read();
+            Console.Out.WriteLine("Для выхода нажать Enter.");
+            Console.Read();
 
         }
     }

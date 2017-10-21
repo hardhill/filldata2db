@@ -47,7 +47,7 @@ namespace filldata2db
 
         public void GenerateSQLFile(string fname)
         {
-            var re = new Regex("#.*?;");
+            //var re = new Regex("#.*?;");
             if (File.Exists(_param.FileCSV))
             {
                 //создаем файл SQL
@@ -80,6 +80,12 @@ namespace filldata2db
                     fs.WriteLine(sb.ToString());
                 }
                 Console.WriteLine("Создание SQL файла завершено.");
+            }
+            else
+            {
+                Console.WriteLine("Нет файла указанного в файле параметров программы.");
+                Console.ReadLine();
+                Environment.Exit(0);
             }
         }
 
