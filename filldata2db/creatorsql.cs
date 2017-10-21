@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
+using System.Text.RegularExpressions;
 
 namespace filldata2db
 {
@@ -32,10 +32,11 @@ namespace filldata2db
             {
                 Console.WriteLine("Генерация шаблона файла схемы \"schema.json\"");
                 _param.FileCSV = "input.csv";
-                _param.Table = @"CREATE TABLE 'CS'.'PROCESSES' ";
+                _param.Table = "DB2ADMIN.PROCESSES";
                 _param.Delimeter = ";";
-                _param.Fields.Add("ID_PROCESS");
-                _param.Types.Add("INT");
+                _param.Create = "CREATE TABLE DB2ADMIN.PROCESSES(ID_PROCESS BIGINT NOT NULL,DATEOFCOMMING TIMESTAMP NOT NULL,DATEOFCOMPLETION TIMESTAMP,ID_STATUS SMALLINT NOT NULL,ID_TYPE_PROCESS SMALLINT NOT NULL,ID_DEPARTMENT SMALLINT NOT NULL, PRIMARY KEY(ID_PROCESS)); ";
+                _param.Fields="INSERT INTO PROCESSES (ID_PROCESS, DATEOFCOMMING, DATEOFCOMPLETION, ID_STATUS, ID_TYPE_PROCESS, ID_DEPARTMENT)";
+                _param.Values ="VALUES({0},'{1}','{2}',{3},{4},{5});";
                 using (StreamWriter file = File.CreateText(@"schema.json"))
                 {
                     JsonSerializer serializer = new JsonSerializer();
@@ -46,30 +47,39 @@ namespace filldata2db
 
         public void GenerateSQLFile(string fname)
         {
+            var re = new Regex("#.*?;");
             if (File.Exists(_param.FileCSV))
             {
                 //создаем файл SQL
                 using (StreamWriter fs = new StreamWriter(fname, false, Encoding.UTF8))
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("BEGIN");
-                    sb.AppendLine("IF EXISTS(SELECT PROCESSES FROM syscat.tables WHERE tabschema='DB2ADMIN' and tabname='PROCESSES') THEN");
-                    sb.AppendLine("DROP TABLE DB2ADMIN.PROCESSES;");
-                    sb.AppendLine("END IF;");
-                    sb.AppendLine("END;");
-                    sb.AppendLine("CREATE TABLE DB2ADMIN.PROCESSES(ID_PROCESS BIGINT NOT NULL,");
-                    sb.AppendLine("DATEOFCOMMING TIMESTAMP NOT NULL,");
-                    sb.AppendLine("DATEOFCOMPLETION TIMESTAMP,");
-                    sb.AppendLine("ID_STATUS SMALLINT NOT NULL,");
-                    sb.AppendLine("ID_TYPE_PROCESS SMALLINT NOT NULL,");
-                    sb.AppendLine("ID_DEPARTMENT SMALLINT NOT NULL,");
-                    sb.AppendLine("PRIMARY KEY(ID_PROCESS)) IN SYSCATSPACE;");
+                    sb.AppendLine("DROP TABLE "+_param.Table+";");
+                    sb.AppendLine(_param.Create);
+                    //sb.AppendLine("CREATE TABLE DB2ADMIN.PROCESSES(ID_PROCESS BIGINT NOT NULL,");
+                    //sb.AppendLine("DATEOFCOMMING TIMESTAMP NOT NULL,");
+                    //sb.AppendLine("DATEOFCOMPLETION TIMESTAMP,");
+                    //sb.AppendLine("ID_STATUS SMALLINT NOT NULL,");
+                    //sb.AppendLine("ID_TYPE_PROCESS SMALLINT NOT NULL,");
+                    //sb.AppendLine("ID_DEPARTMENT SMALLINT NOT NULL,PRIMARY KEY(ID_PROCESS));");
                     sb.AppendLine("");
-                    sb.AppendLine("");
-                    sb.AppendLine("");
-                          
+                    using (StreamReader fr = new StreamReader(_param.FileCSV))
+                    {
+                        while (fr.Peek() >= 0)
+                        {
+                            string sline = fr.ReadLine();
+                            string[] arrFields = sline.Split(_param.Delimeter[0]);
+                            sb.AppendLine(_param.Fields);
+                            sline = String.Format(_param.Values, arrFields);
+                            sline = sline.Replace("\"", "");
+                            sb.AppendLine(sline);
+                        }
+                        
+                        sb.AppendLine("");
+                    }
                     fs.WriteLine(sb.ToString());
                 }
+                Console.WriteLine("Создание SQL файла завершено.");
             }
         }
 
